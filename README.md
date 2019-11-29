@@ -17,7 +17,8 @@ For the tutorial we will use an existing table named employees:
 | 5 | Alex | manufacturing | 33 | 1250
 
 ### Creating a pgql.Table object
-The type **Table** has methods to perform basic operations on a specific table in a database.
+The type **Table** has methods to perform basic operations on a specific table in a database.  
+All **Table** methods returns an error object for handle it in your way.
 ```go
 package main
 
@@ -118,7 +119,7 @@ Read function returns an array of maps ([]map[string]interface{}). Each map repr
 mytable := pgql.New("employees", connStr)
 
 // Reads all
-result := mytable.Read(Data{})
+result, _ := mytable.Read(Data{})
 
 // Reads first 3 results order by name in descending order
 query := pgql.Data{
@@ -126,13 +127,13 @@ query := pgql.Data{
     DescOrder: true,
     Limit: 3,
 }
-result = mytable.Read(query)
+result, _ = mytable.Read(query)
 
 // Reads only salary column
 query = pgql.Data{
     Columns: []string{"salary"},
 }
-result = mytable.Read(query)
+result, _ = mytable.Read(query)
 ```  
 
 ## Test
