@@ -3,7 +3,6 @@ package pgql
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -39,53 +38,68 @@ func New(name, dbconfig string) Table {
 	return tbl
 }
 
-func openDB(config string) *sql.DB {
+func openDB(config string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", config)
 	if err != nil {
-		panic(err)
+		return db, err
 	}
 	err = db.Ping()
 	if err != nil {
-		panic(err)
+		return db, err
 	}
-	return db
+	return db, err
 }
 
 // Insert inserts one row in a table
-func (t Table) Insert(d Data) {
-	db := openDB(t.Config)
-	defer db.Close()
-	_, err := db.Exec(t.getInsertStr(d), d.ColVals...)
+func (t Table) Insert(d Data) error {
+	db, err := openDB(t.Config)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	defer db.Close()
+	_, err = db.Exec(t.getInsertStr(d), d.ColVals...)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 // Update updates one row in a table
-func (t Table) Update(d Data) {
-	db := openDB(t.Config)
+func (t Table) Update(d Data) error {
+	db, err := openDB(t.Config)
+	if err != nil {
+		return err
+	}
 	defer db.Close()
 	d.ColVals = append(d.ColVals, d.KeyVal)
-	_, err := db.Exec(t.getUpdateStr(d), d.ColVals...)
+	_, err = db.Exec(t.getUpdateStr(d), d.ColVals...)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return err
 }
 
 // Delete deletes a row in a table
-func (t Table) Delete(d Data) {
-	db := openDB(t.Config)
+func (t Table) Delete(d Data) error {
+	db, err := openDB(t.Config)
+	if err != nil {
+		return err
+	}
 	defer db.Close()
 	sqlQuery := fmt.Sprintf(`DELETE FROM %s WHERE %s=$1`, t.Name, d.Key)
-	_, err := db.Exec(sqlQuery, d.KeyVal)
+	_, err = db.Exec(sqlQuery, d.KeyVal)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return err
 }
 
 // Read reads one or more rows in a table
-func (t Table) Read(d Data) []map[string]interface{} {
-	db := openDB(t.Config)
+func (t Table) Read(d Data) ([]map[string]interface{}, error) {
+	db, err := openDB(t.Config)
+	if err != nil {
+		return nil, err
+	}
 	defer db.Close()
 	var rows *sql.Rows
 	if d.KeyVal != nil {
@@ -93,8 +107,11 @@ func (t Table) Read(d Data) []map[string]interface{} {
 	} else {
 		rows, _ = db.Query(t.getReadStr(d))
 	}
-	result := rowsToJSON(rows)
-	return result
+	result, err := rowsToJSON(rows)
+	if err != nil {
+		return result, err
+	}
+	return result, err
 }
 
 //////////////////////////////
@@ -167,10 +184,10 @@ func arrToInterface(arr []string) []interface{} {
 	return intf
 }
 
-func rowsToJSON(rows *sql.Rows) []map[string]interface{} {
+func rowsToJSON(rows *sql.Rows) ([]map[string]interface{}, error) {
 	colNames, err := rows.Columns()
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
 
 	numCols := len(colNames)
@@ -189,5 +206,5 @@ func rowsToJSON(rows *sql.Rows) []map[string]interface{} {
 		}
 		container = append(container, rowMap)
 	}
-	return container
+	return container, err
 }

@@ -16,13 +16,13 @@ func getDbConnString() string {
 }
 
 func delAll() {
-	db := openDB(getDbConnString())
+	db, _ := openDB(getDbConnString())
 	defer db.Close()
 	db.Exec("DELETE FROM fixtures")
 }
 
 func fill() {
-	db := openDB(getDbConnString())
+	db, _ := openDB(getDbConnString())
 	defer db.Close()
 	db.Exec("INSERT INTO fixtures VALUES (1,'One',10),(2,'Two',20),(3,'Three',30)")
 }
@@ -80,7 +80,7 @@ func TestGetInsertStr(t *testing.T) {
 func TestRead(t *testing.T) {
 	restore()
 	tbl := New("fixtures", getDbConnString())
-	result := tbl.Read(Data{Columns: []string{"col2", "col3"}})
+	result, _ := tbl.Read(Data{Columns: []string{"col2", "col3"}})
 	wanted := "Two"
 	if result[1]["col2"] != wanted {
 		t.Errorf("Incorrect, got: %s, want: %s.", result[1]["col2"], wanted)
@@ -91,7 +91,7 @@ func TestUpdate(t *testing.T) {
 	restore()
 	tbl := New("fixtures", getDbConnString())
 	tbl.Update(Data{Columns: []string{"col2", "col3"}, ColVals: []interface{}{"Two++", 21}, Key: "col1", KeyVal: 2})
-	db := openDB(getDbConnString())
+	db, _ := openDB(getDbConnString())
 	row := db.QueryRow("SELECT col2,col3 FROM fixtures WHERE col1=2")
 	var str string
 	var number int
@@ -107,7 +107,7 @@ func TestDelete(t *testing.T) {
 	restore()
 	tbl := New("fixtures", getDbConnString())
 	tbl.Delete(Data{Key: "col1", KeyVal: 2})
-	db := openDB(getDbConnString())
+	db, _ := openDB(getDbConnString())
 	row := db.QueryRow("SELECT col2 FROM fixtures WHERE col1=2")
 	var str string
 	row.Scan(&str)
@@ -122,7 +122,7 @@ func TestInsert(t *testing.T) {
 	restore()
 	tbl := New("fixtures", getDbConnString())
 	tbl.Insert(Data{ColVals: []interface{}{4, "Four", 40}})
-	db := openDB(getDbConnString())
+	db, _ := openDB(getDbConnString())
 	row := db.QueryRow("SELECT col2, col3 FROM fixtures WHERE col1=4")
 	var str string
 	var number int
