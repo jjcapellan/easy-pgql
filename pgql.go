@@ -114,6 +114,27 @@ func (t Table) Read(d Data) ([]map[string]interface{}, error) {
 	return result, err
 }
 
+// GetPos returns the position (int64) of a row with the pair Key, KeyVal
+func (t Table) GetPos(d Data) (int64, error) {
+	db, err := openDB(t.Config)
+	if err != nil {
+		return 0, err
+	}
+	defer db.Close()
+	direction := ""
+	if d.DescOrder {
+		direction = "DESC"
+	}
+	sqlQuery := fmt.Sprintf(`SELECT ROW_NUMBER FROM (SELECT ROW_NUMBER() OVER (ORDER BY %s %s), %s FROM %s) x WHERE %s=$1`, d.OrderBy, direction, d.Key, t.Name, d.Key)
+	row := db.QueryRow(sqlQuery, d.KeyVal)
+	var position int64
+	err = row.Scan(&position)
+	if err != nil {
+		return 0, err
+	}
+	return position, nil
+}
+
 //////////////////////////////
 // sql strings helpers
 

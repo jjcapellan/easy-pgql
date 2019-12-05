@@ -133,3 +133,26 @@ func TestInsert(t *testing.T) {
 		t.Errorf("Incorrect, got: %s, %d, want: %s, %d.", str, number, wanted1, wanted2)
 	}
 }
+
+func TestGetPos(t *testing.T) {
+	restore()
+	tbl := New("fixtures", getDbConnString())
+	// Normal position (ORDER BY key ASC)
+	n, err := tbl.GetPos(Data{Key: "col2", KeyVal: "Two", OrderBy: "col1"})
+	if err != nil {
+		t.Errorf("Error in GetPos() test")
+	}
+	wanted := 2
+	if n != int64(wanted) {
+		t.Errorf("Incorrect position, got: %d, want: %d", n, wanted)
+	}
+	// Reversed position (ORDER BY DESC)
+	n, err = tbl.GetPos(Data{Key: "col2", KeyVal: "One", OrderBy: "col1", DescOrder: true})
+	if err != nil {
+		t.Errorf("Error in GetPos() test")
+	}
+	wanted = 3
+	if n != int64(wanted) {
+		t.Errorf("Incorrect position, got: %d, want: %d", n, wanted)
+	}
+}

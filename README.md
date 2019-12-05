@@ -136,5 +136,23 @@ query = pgql.Data{
 result, _ = mytable.Read(query)
 ```  
 
+### Get position of selected row
+The function GetPos uses 4 Data properties: *Key*, *KeyVal*, *OrderBy* and optionally *DescOrder*.
+```go
+mytable := pgql.New("employees", connStr)
+
+// Returns the position (int64) of Alex by his salary
+query := pgql.Data{
+    Key: "name",
+    KeyVal: "Alex",
+    OrderBy: "salary",
+    DescOrder: true,     // Bigest salary --> first position
+}
+result, _ := mytable.GetPos(pgql.Data)
+
+// result == 3
+
+``` 
+
 ## Test
 Testing uses a table named fixtures with 3 columns (col1, col2, col3) of types integer, varchar(40), and integer.
